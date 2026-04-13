@@ -1,59 +1,86 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Gender Classifier API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## Project Description
 
-## About Laravel
+The Gender Classifier API is a simple RESTful web service built with Laravel 12. It takes a person's name as input and predicts their gender by making a request to the external [genderize.io](https://genderize.io/) API. 
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+In addition to returning the predicted gender and the probability (confidence score), the API determines whether the prediction is highly confident based on the probability (`>= 0.7`) and sample size (`>= 100`).
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Setup Instructions
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+To get the project up and running on your local machine, follow these steps:
 
-## Learning Laravel
+1. **Clone the repository:**
+   ```bash
+   git clone <your-repository-url>
+   cd gender-classifier
+   ```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+2. **Install dependencies:**
+   Ensure you have PHP and Composer installed, then run:
+   ```bash
+   composer install
+   ```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+3. **Set up the environment file:**
+   Copy the `.env.example` file to create your local environment setting file.
+   ```bash
+   cp .env.example .env
+   ```
+   
+4. **Generate the application key:**
+   ```bash
+   php artisan key:generate
+   ```
 
-## Laravel Sponsors
+5. **Start the local development server:**
+   ```bash
+   php artisan serve
+   ```
+   Your application will now be running at `http://127.0.0.1:8000`.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+*(Optional)* Since this API only has one endpoint and no database is required by default, you do not need to run migrations.
 
-### Premium Partners
+---
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+## API Endpoints
 
-## Contributing
+### Classify Gender
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Predicts the gender based on a given name string.
 
-## Code of Conduct
+- **URL:** `/api/classify`
+- **Method:** `GET`
+- **Query Parameters:**
+  - `name` (required, string): The single name you want to classify. Formats with numbers or non-string inputs will get an error response.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+#### Success Response (200 OK)
 
-## Security Vulnerabilities
+**Example Request:**
+```
+GET /api/classify?name=luc
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+**Example Response:**
+```json
+{
+    "status": "success",
+    "data": {
+        "name": "luc",
+        "gender": "male",
+        "probability": 0.99,
+        "sample_size": 25000,
+        "is_confident": true,
+        "processed_at": "2026-04-12T23:55:00+00:00"
+    }
+}
+```
 
-## License
+#### Error Handling
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+The API returns appropriate HTTP status codes based on validation or external API errors:
+
+- **400 Bad Request**: If the `name` parameter is missing or empty.
+- **422 Unprocessable Entity**: If the `name` provided is invalid (e.g., numeric).
+- **502 Bad Gateway**: If there's an error reaching the external genderize.io service.
+- **500 Internal Server Error**: If any other unexpected error occurs.
