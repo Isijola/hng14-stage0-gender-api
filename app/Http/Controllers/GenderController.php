@@ -20,12 +20,11 @@ class GenderController extends Controller
             ], 400);
         }
 
-        // 2. Validation: Non-string (Though query params are usually strings, 
-        // we check if it's numeric/array to satisfy the 422 requirement)
-        if (!is_string($name) || is_numeric($name)) {
+        // 2. Validation: Non-string or containing invalid characters
+        if (!is_string($name) || !preg_match('/^[a-zA-Z\s\-\']+$/', $name)) {
             return response()->json([
                 "status" => "error",
-                "message" => "Name must be a valid string"
+                "message" => "Name must be a valid string without numbers or special characters"
             ], 422);
         }
 
@@ -39,17 +38,9 @@ class GenderController extends Controller
 
             $data = $response->json();
 
-            // 4. Edge Cases (null gender or 0 count)
-            if (is_null($data['gender']) || $data['count'] === 0) {
-                return response()->json([
-                    "status" => "error",
-                    "message" => "No prediction available for the provided name"
-                ], 200); // Note: Task says return this JSON; usually 200 or 404. Let's stick to the JSON structure provided.
-            }
-
-            // 5. Processing Logic
-            $sampleSize = $data['count'];
-            $probability = $data['probability'];
+            // 4. Processing Logic (Handle both successful records and unknown edge cases identically)
+            $sampleSize = $data['count'] ?? 0;
+            $probability = $data['probability'] ?? 0;
 
             $isConfident = ($probability >= 0.7 && $sampleSize >= 100);
 
@@ -57,9 +48,9 @@ class GenderController extends Controller
                 "status" => "success",
                 "data" => [
                     "name" => $name,
-                    "gender" => $data['gender'],
-                    "probability" => $probability,
-                    "sample_size" => $sampleSize,
+                    "gender" => $data['gender'] ?? null,
+                    "probability" => (float) $probability,
+                    "sample_size" => (int) $sampleSize,
                     "is_confident" => $isConfident,
                     "processed_at" => Carbon::now('UTC')->toIso8601String()
                 ]
