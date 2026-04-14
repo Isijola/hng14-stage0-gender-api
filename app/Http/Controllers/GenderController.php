@@ -20,11 +20,12 @@ class GenderController extends Controller
             ], 400);
         }
 
-        // 2. Validation: Non-string or containing invalid characters
-        if (!is_string($name) || !preg_match('/^[a-zA-Z\s\-\']+$/', $name)) {
+        // 2. Validation: Non-string or containing numbers
+        // We only reject actual arrays/objects or strings that contain digits
+        if (!is_string($name) || preg_match('/\d/', $name)) {
             return response()->json([
                 "status" => "error",
-                "message" => "Name must be a valid string without numbers or special characters"
+                "message" => "Name must be a valid string without numbers"
             ], 422);
         }
 
